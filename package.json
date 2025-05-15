@@ -2,9 +2,14 @@
   "name": "react-router-starter",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
   "scripts": {
     "build": "react-router build",
     "dev": "cross-env NODE_ENV=development node server.js",
+    "preinstall": "npx only-allow pnpm",
     "start": "node server.js",
     "typecheck": "react-router typegen && tsc -b"
   },
