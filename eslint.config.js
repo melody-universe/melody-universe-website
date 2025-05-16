@@ -5,6 +5,7 @@ import json from "@eslint/json";
 import markdown from "@eslint/markdown";
 import tailwindcss from "@hyoban/eslint-plugin-tailwindcss";
 import perfectionist from "eslint-plugin-perfectionist";
+import prettier from "eslint-plugin-prettier/recommended";
 import pluginReact from "eslint-plugin-react";
 import fs from "fs";
 import globals from "globals";
@@ -58,6 +59,13 @@ export default tseslint.config([
   {
     extends: [perfectionist.configs["recommended-natural"]],
     files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"],
+    rules: reduceSeverityLevelsToWarnings(
+      perfectionist.configs["recommended-natural"],
+    ),
+  },
+  {
+    extends: [prettier],
+    rules: reduceSeverityLevelsToWarnings(prettier),
   },
   {
     settings: {
@@ -104,4 +112,36 @@ function findTailwindImportCss(dir) {
   }
 
   return null;
+}
+
+/**
+ * While we do not want any linting warnings to get committed to source control,
+ * some warnings are pretty severe and should be fixed immediately, while some
+ * are more aesthetic. This function can be used to reduce all error-level rules
+ * in a linter config to warnings.
+ *
+ * Note that we running `pnpm lint` will still return an exit code due to the CLI
+ * argument we pass into the script.
+ * @param {import("eslint").Linter.Config} config
+ * @returns {Partial<import("eslint").Linter.RulesRecord> | undefined}
+ */
+function reduceSeverityLevelsToWarnings(config) {
+  if (!config.rules) {
+    return undefined;
+  }
+
+  return Object.fromEntries(
+    Object.entries(config.rules).map(([key, value]) => {
+      if (Array.isArray(value)) {
+        const [severity, ...rest] = value;
+        if (severity === "error") {
+          return [key, ["warn", ...rest]];
+        } else {
+          return [key, value];
+        }
+      }
+
+      return [key, value === "error" ? "warn" : value];
+    }),
+  );
 }
