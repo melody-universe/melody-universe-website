@@ -1,21 +1,22 @@
 // @ts-check
 
 import js from "@eslint/js";
-import globals from "globals";
-import tseslint from "typescript-eslint";
-import pluginReact from "eslint-plugin-react";
 import json from "@eslint/json";
 import markdown from "@eslint/markdown";
 import tailwindcss from "@hyoban/eslint-plugin-tailwindcss";
+import perfectionist from "eslint-plugin-perfectionist";
+import pluginReact from "eslint-plugin-react";
 import fs from "fs";
+import globals from "globals";
 import path from "path";
+import tseslint from "typescript-eslint";
 
 export default tseslint.config([
   { ignores: [".react-router", "build"] },
   {
+    extends: [js.configs.recommended],
     files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"],
     plugins: { js },
-    extends: [js.configs.recommended],
   },
   {
     files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"],
@@ -30,30 +31,34 @@ export default tseslint.config([
     files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"],
   },
   {
+    extends: [json.configs.recommended],
     files: ["**/*.json"],
-    plugins: { json },
     language: "json/json",
-    extends: [json.configs.recommended],
+    plugins: { json },
   },
   {
+    extends: [json.configs.recommended],
     files: ["**/*.jsonc"],
-    plugins: { json },
     language: "json/jsonc",
-    extends: [json.configs.recommended],
-  },
-  {
-    files: ["**/*.json5"],
     plugins: { json },
-    language: "json/json5",
-    extends: [json.configs.recommended],
   },
   {
-    files: ["**/*.md"],
-    plugins: { markdown },
-    language: "markdown/gfm",
+    extends: [json.configs.recommended],
+    files: ["**/*.json5"],
+    language: "json/json5",
+    plugins: { json },
+  },
+  {
     extends: [markdown.configs.recommended],
+    files: ["**/*.md"],
+    language: "markdown/gfm",
+    plugins: { markdown },
   },
   tailwindcss.configs["flat/recommended"],
+  {
+    extends: [perfectionist.configs["recommended-natural"]],
+    files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"],
+  },
   {
     settings: {
       react: {
@@ -69,9 +74,9 @@ export default tseslint.config([
 /**
  * Recursively walks `dir`, looking for the first .css file
  * that has a line starting with \@import "tailwindcss
- * 
+ *
  * https://github.com/hyoban/eslint-plugin-tailwindcss/pull/3#issuecomment-2860221137
- * 
+ *
  * @param {string} dir  absolute path to start searching from
  * @returns {string|null}  absolute path to matching CSS, or null if none found
  *

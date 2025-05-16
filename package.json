@@ -41,6 +41,7 @@
     "@types/react-dom": "^19.1.2",
     "cross-env": "^7.0.3",
     "eslint": "^9.26.0",
+    "eslint-plugin-perfectionist": "^4.13.0",
     "eslint-plugin-react": "^7.37.5",
     "globals": "^16.1.0",
     "tailwindcss": "^4.1.7",
