@@ -1,0 +1,11 @@
+pre-commit:
+  jobs:
+    - name: lint
+      run: pnpm lint --fix {staged_files}
+      stage_fixed: true
+      exclude:
+        - "*.yaml"
+        - "*.yml"
+
+    - name: typecheck
+      run: pnpm typecheck
