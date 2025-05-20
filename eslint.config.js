@@ -7,6 +7,7 @@ import tailwindcss from "@hyoban/eslint-plugin-tailwindcss";
 import perfectionist from "eslint-plugin-perfectionist";
 import prettier from "eslint-plugin-prettier/recommended";
 import pluginReact from "eslint-plugin-react";
+import yml from "eslint-plugin-yml";
 import fs from "fs";
 import globals from "globals";
 import path from "path";
@@ -66,6 +67,10 @@ export default tseslint.config([
   {
     extends: [prettier],
     rules: reduceSeverityLevelsToWarnings(prettier),
+  },
+  {
+    extends: [yml.configs["flat/recommended"]],
+    ignores: ["pnpm-lock.yaml"],
   },
   {
     settings: {
