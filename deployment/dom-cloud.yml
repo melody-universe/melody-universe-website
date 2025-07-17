@@ -1,0 +1,13 @@
+features:
+  - node lts
+  - ssl
+  - ssl always
+  - dns off
+source: ${{ source }}
+nginx:
+  passenger:
+    enabled: on
+    app_start_command: pnpm start
+commands:
+  - pnpm install
+  - pnpm build

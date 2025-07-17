@@ -8,10 +8,19 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare deployment
+        id: prepare-deployment
+        run: |
+          npm install --global pnpm
+          pnpm install
+          pnpm prepare-deployment
+
       - name: Invoke deployment hook
         uses: distributhor/workflow-webhook@v3
         with:
           webhook_url: https://my.domcloud.co/api/githubdeploy
           webhook_secret: ${{ secrets.WEBHOOK_SECRET }}
           webhook_auth: ${{ secrets.WEBHOOK_AUTH }}
-          data: '{"commands":["git pull","restart"]}'
+          data: ${{ steps.prepare-deployment.outputs.DATA }}
