@@ -1,0 +1,17 @@
+name: Deploy to DOM Cloud
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Invoke deployment hook
+        uses: distributhor/workflow-webhook@v3
+        with:
+          webhook_url: https://my.domcloud.co/api/githubdeploy
+          webhook_secret: ${{ secrets.WEBHOOK_SECRET }}
+          webhook_auth: ${{ secrets.WEBHOOK_AUTH }}
+          data: '{"commands":["git pull","restart"]}'
