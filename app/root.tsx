@@ -10,7 +10,7 @@ import {
 import type { Route } from "./+types/root";
 
 import "./app.css";
-import { useParallax } from "./hooks/useParallax";
+import { Parallax } from "./components/Parallax";
 
 export const links: Route.LinksFunction = () => [
   { href: "https://fonts.googleapis.com", rel: "preconnect" },
@@ -59,8 +59,6 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const parallax = useParallax();
-
   return (
     <html lang="en">
       <head>
@@ -71,7 +69,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
-        {parallax}
+        <Parallax />
         <ScrollRestoration />
         <Scripts />
       </body>
