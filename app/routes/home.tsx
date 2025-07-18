@@ -8,7 +8,7 @@ export default function Home() {
 
 export function meta() {
   return [
-    { title: "New React Router App" },
-    { content: "Welcome to React Router!", name: "description" },
+    { title: "Melody Universe" },
+    { content: "This is my personal website.", name: "description" },
   ];
 }
