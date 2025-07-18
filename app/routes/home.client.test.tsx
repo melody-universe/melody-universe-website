@@ -10,7 +10,6 @@ import { createRouteStub } from "./test-utils/createRouteStub";
 const Stub = createRoutesStub([
   createRouteStub<Info>({
     Component: Home,
-    loader: () => ({ message: "Hello, World!" }),
     path: "/",
   }),
 ]);
