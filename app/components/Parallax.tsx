@@ -19,6 +19,7 @@ export function Parallax(): ReactNode {
   const [starMap, setStarMap] = useState<
     {
       animationDelay: number;
+      color: number;
       layerIndex: number;
       x: number;
       y: number;
@@ -45,6 +46,7 @@ export function Parallax(): ReactNode {
             for (let i = 0; i < layers.length; i++) {
               newMap[y][x].push({
                 animationDelay: Math.random() * 2,
+                color: Math.floor(Math.random() * colors),
                 layerIndex: i,
                 x: (x + Math.random()) * tileSize,
                 y: (y + Math.random()) * tileSize,
@@ -61,6 +63,7 @@ export function Parallax(): ReactNode {
             for (let i = 0; i < layers.length; i++) {
               newMap[y][x].push({
                 animationDelay: Math.random() * 2,
+                color: Math.floor(Math.random() * colors),
                 layerIndex: i,
                 x: (x + Math.random()) * tileSize,
                 y: (y + Math.random()) * tileSize,
@@ -83,35 +86,37 @@ export function Parallax(): ReactNode {
           xmlns="http://www.w3.org/2000/svg"
         >
           <defs>
-            {layers.map((layer, i) => (
-              <radialGradient
-                cx={0.5}
-                cy={0.5}
-                id={`layer-${i}`}
-                key={i}
-                r={0.5}
-                spreadMethod="pad"
-              >
-                <stop
-                  offset={0}
-                  stopColor="#fff"
-                  stopOpacity={layer.brightness}
-                />
-                <stop offset={1} stopColor="#fff" stopOpacity={0} />
-              </radialGradient>
-            ))}
+            {layers.map((layer, layerIndex) =>
+              Array.from({ length: colors }).map((_, colorIndex) => (
+                <radialGradient
+                  cx={0.5}
+                  cy={0.5}
+                  id={`layer-${layerIndex}-color-${colorIndex}`}
+                  key={`layer-${layerIndex}-color-${colorIndex}`}
+                  r={0.5}
+                  spreadMethod="pad"
+                >
+                  <stop
+                    offset={0}
+                    stopColor={hslToHex((colorIndex / colors) * 360, 80, 85)}
+                    stopOpacity={layer.brightness}
+                  />
+                  <stop offset={1} stopColor="#fff" stopOpacity={0} />
+                </radialGradient>
+              )),
+            )}
           </defs>
           <g>
             {starMap.flatMap((row, rowIndex) =>
               row.flatMap((column, columnIndex) =>
-                column.map(({ animationDelay, layerIndex, x, y }, i) => (
+                column.map(({ animationDelay, color, layerIndex, x, y }, i) => (
                   <circle
                     className="animate-pulse"
                     cx={x}
                     cy={y}
-                    fill={`url(#layer-${layerIndex})`}
+                    fill={`url(#layer-${layerIndex}-color-${color})`}
                     key={`${rowIndex}_${columnIndex}_${i}`}
-                    r={1.5}
+                    r={layers[layerIndex].radius}
                     style={{ animationDelay: `${animationDelay}s` }}
                   />
                 )),
@@ -124,10 +129,25 @@ export function Parallax(): ReactNode {
   );
 }
 
-const layers: { brightness: number; density: number }[] = [
-  { brightness: 1, density: 3 },
-  { brightness: 0.5, density: 4 },
-  { brightness: 0.25, density: 6 },
+const layers: { brightness: number; density: number; radius: number }[] = [
+  { brightness: 1, density: 4, radius: 2.5 },
+  { brightness: 0.5, density: 6, radius: 2 },
+  { brightness: 0.25, density: 8, radius: 1.5 },
 ];
 
+const colors = 10;
+
 const tileSize = 100;
+
+function hslToHex(hue: number, saturation: number, lightness: number) {
+  lightness /= 100;
+  const a = (saturation * Math.min(lightness, 1 - lightness)) / 100;
+  const f = (n: number) => {
+    const k = (n + hue / 30) % 12;
+    const color = lightness - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color)
+      .toString(16)
+      .padStart(2, "0"); // convert to Hex and prefix "0" if needed
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
