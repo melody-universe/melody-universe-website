@@ -102,6 +102,7 @@ export function Parallax(): ReactNode {
 
             for (let i = 0; i < layer.stars.length; i++) {
               const star = layer.stars[i];
+              const offset = star.speed * (elapsedTime / 1000);
               star.y -= offset;
 
               if (star.y + layer.definition.radius < 0) {
@@ -167,6 +168,7 @@ const colors = 10;
 
 const densityTileSize = 100;
 const scatterCoefficient = 3;
+const speedVariance = 0.8;
 
 const tileSize = densityTileSize * Math.sqrt(scatterCoefficient);
 
@@ -186,6 +188,7 @@ type Star = {
   animationDelay: number;
   circle: SVGCircleElement;
   color: number;
+  speed: number;
   x: number;
   y: number;
 };
@@ -219,6 +222,10 @@ function createStar(
     animationDelay,
     circle,
     color,
+    speed:
+      layerDefinition.speed -
+      (speedVariance * layerDefinition.speed) / 2 +
+      Math.random() * speedVariance * layerDefinition.speed,
     x,
     y,
   };
