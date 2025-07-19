@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useRef } from "react";
 
 type Layer = {
   definition: LayerDefinition;
+  offset: number;
   tiles: Tile[][];
 };
 
@@ -10,10 +11,10 @@ type LayerDefinition = {
   density: number;
   index: number;
   radius: number;
+  speed: number;
 };
 
 type Tile = {
-  offset: number;
   stars: Star[];
 };
 
@@ -24,21 +25,25 @@ export function Parallax(): ReactNode {
     layers: Layer[];
     visible: { height: number; width: number };
   }>({
-    layers: layerDefinitions.map((definition) => ({ definition, tiles: [] })),
+    layers: layerDefinitions.map((definition) => ({
+      definition,
+      offset: 0,
+      tiles: [],
+    })),
     visible: { height: 0, width: 0 },
   });
   const { layers, visible } = stateRef.current;
 
   useEffect(function renderStars() {
     let handle = requestAnimationFrame(handleNewFrame);
-    // let startTime = performance.now();
+    let startTime = performance.now();
 
-    function handleNewFrame(/* endTime: number */) {
-      // const elapsedTime = endTime - startTime;
+    function handleNewFrame(endTime: number) {
+      const elapsedTime = endTime - startTime;
 
       render();
 
-      // startTime = endTime;
+      startTime = endTime;
       handle = requestAnimationFrame(handleNewFrame);
 
       function render() {
@@ -54,6 +59,7 @@ export function Parallax(): ReactNode {
         const initialWidth = visible.width;
 
         addMissingTiles(graphics);
+        animate();
 
         function addMissingTiles(graphics: SVGGElement) {
           if (initialHeight * tileSize <= screenHeight) {
@@ -81,6 +87,20 @@ export function Parallax(): ReactNode {
                   layer.tiles[tileY].push(
                     createTile(layer.definition, graphics, tileX, tileY),
                   );
+                }
+              }
+            }
+          }
+        }
+
+        function animate() {
+          for (const layer of layers) {
+            layer.offset -= layer.definition.speed * (elapsedTime / 1000);
+
+            for (const tileRow of layer.tiles) {
+              for (const tile of tileRow) {
+                for (const star of tile.stars) {
+                  star.circle.style.transform = `translateY(${layer.offset}px)`;
                 }
               }
             }
@@ -128,9 +148,9 @@ export function Parallax(): ReactNode {
 }
 
 const layerDefinitions: LayerDefinition[] = [
-  { brightness: 1, density: 1, radius: 2.5 },
-  { brightness: 0.5, density: 2, radius: 2 },
-  { brightness: 0.25, density: 3, radius: 1.5 },
+  { brightness: 1, density: 1, radius: 2.5, speed: 4 },
+  { brightness: 0.5, density: 2, radius: 2, speed: 2 },
+  { brightness: 0.25, density: 3, radius: 1.5, speed: 1 },
 ].map((definition, index) => ({ ...definition, index }));
 
 const colors = 10;
@@ -152,7 +172,6 @@ function createTile(
   tileY: number,
 ): Tile {
   return {
-    offset: 0,
     stars: Array.from({
       length: layerDefinition.density,
     }).map(() => createStar()),
