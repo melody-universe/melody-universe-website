@@ -1,6 +1,16 @@
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 export function Parallax(): ReactNode {
+  const layerStatesRef = useRef<{
+    offset: number;
+    stars: {
+      animationDelay: number;
+      color: number;
+      x: number;
+      y: number;
+    }[][][];
+  }>(layers.map);
+
   const [[screenWidth, screenHeight], setScreenSize] = useState<
     [number, number]
   >([0, 0]);
