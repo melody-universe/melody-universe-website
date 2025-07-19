@@ -2,8 +2,9 @@ import { type ReactNode, useEffect, useRef } from "react";
 
 type Layer = {
   definition: LayerDefinition;
-  offset: number;
-  tiles: Tile[][];
+  stars: Star[];
+  verticalDistanceTraveled: number;
+  viewPort: { height: number; width: number };
 };
 
 type LayerDefinition = {
@@ -14,25 +15,18 @@ type LayerDefinition = {
   speed: number;
 };
 
-type Tile = {
-  stars: Star[];
-};
-
 export function Parallax(): ReactNode {
   const graphicsRef = useRef<SVGGElement>(null);
 
-  const stateRef = useRef<{
-    layers: Layer[];
-    visible: { height: number; width: number };
-  }>({
-    layers: layerDefinitions.map((definition) => ({
+  const layersRef = useRef<Layer[]>(
+    layerDefinitions.map((definition) => ({
       definition,
-      offset: 0,
-      tiles: [],
+      stars: [],
+      verticalDistanceTraveled: 0,
+      viewPort: { height: 0, width: 0 },
     })),
-    visible: { height: 0, width: 0 },
-  });
-  const { layers, visible } = stateRef.current;
+  );
+  const layers = layersRef.current;
 
   useEffect(function renderStars() {
     let handle = requestAnimationFrame(handleNewFrame);
@@ -55,38 +49,46 @@ export function Parallax(): ReactNode {
         const screenWidth = document.body.clientWidth;
         const screenHeight = document.body.clientHeight;
 
-        const initialHeight = visible.height;
-        const initialWidth = visible.width;
-
-        addMissingTiles(graphics);
+        addMissingStars(graphics);
         animate();
 
-        function addMissingTiles(graphics: SVGGElement) {
-          if (initialHeight * tileSize <= screenHeight) {
-            visible.height = Math.ceil(1 + screenHeight / tileSize);
+        function addMissingStars(graphics: SVGGElement) {
+          for (const layer of layers) {
+            const { viewPort } = layer;
 
-            for (const layer of layers) {
-              for (let tileY = initialHeight; tileY < visible.height; tileY++) {
-                layer.tiles.push([]);
-
-                for (let tileX = 0; tileX < initialWidth; tileX++) {
-                  layer.tiles[tileY].push(
-                    createTile(layer.definition, graphics, tileX, tileY),
-                  );
-                }
-              }
+            let initialHeight = viewPort.height;
+            if (layer.verticalDistanceTraveled >= tileSize) {
+              const heightToRender =
+                Math.floor(layer.verticalDistanceTraveled / tileSize) *
+                tileSize;
+              initialHeight -= heightToRender;
+              layer.verticalDistanceTraveled -= heightToRender;
             }
-          }
+            const initialWidth = viewPort.width;
 
-          if (initialWidth * tileSize <= screenWidth) {
-            visible.width = Math.ceil(1 + screenWidth / tileSize);
+            viewPort.height = Math.max(
+              initialHeight,
+              Math.ceil((screenHeight + maxRadius) / tileSize + 1) * tileSize,
+            );
 
-            for (const layer of layers) {
-              for (let tileY = 0; tileY < visible.height; tileY++) {
-                for (let tileX = initialWidth; tileX < visible.width; tileX++) {
-                  layer.tiles[tileY].push(
-                    createTile(layer.definition, graphics, tileX, tileY),
-                  );
+            viewPort.width = Math.max(
+              initialWidth,
+              Math.ceil((screenWidth + maxRadius) / tileSize + 1) * tileSize,
+            );
+
+            for (let baseY = 0; baseY < viewPort.height; baseY += tileSize) {
+              for (let baseX = 0; baseX < viewPort.width; baseX += tileSize) {
+                if (baseY >= initialHeight || baseX >= initialWidth) {
+                  for (let i = 0; i < layer.definition.density; i++) {
+                    layer.stars.push(
+                      createStar(
+                        layer.definition,
+                        graphics,
+                        baseX + Math.random() * tileSize,
+                        baseY + Math.random() * tileSize,
+                      ),
+                    );
+                  }
                 }
               }
             }
@@ -95,13 +97,27 @@ export function Parallax(): ReactNode {
 
         function animate() {
           for (const layer of layers) {
-            layer.offset -= layer.definition.speed * (elapsedTime / 1000);
+            const offset = layer.definition.speed * (elapsedTime / 1000);
+            layer.verticalDistanceTraveled += offset;
 
-            for (const tileRow of layer.tiles) {
-              for (const tile of tileRow) {
-                for (const star of tile.stars) {
-                  star.circle.style.transform = `translateY(${layer.offset}px)`;
-                }
+            for (let i = 0; i < layer.stars.length; i++) {
+              const star = layer.stars[i];
+              star.y -= offset;
+
+              if (star.y + layer.definition.radius < 0) {
+                layer.stars.splice(i, 1);
+                i--;
+                continue;
+              }
+
+              if (
+                star.y <= screenHeight + maxRadius &&
+                star.x <= screenWidth + maxRadius
+              ) {
+                star.circle.style.display = "";
+                star.circle.setAttribute("cy", star.y.toString());
+              } else {
+                star.circle.style.display = "none";
               }
             }
           }
@@ -147,15 +163,24 @@ export function Parallax(): ReactNode {
   );
 }
 
+const colors = 10;
+
+const densityTileSize = 100;
+const scatterCoefficient = 3;
+
+const tileSize = densityTileSize * Math.sqrt(scatterCoefficient);
+
 const layerDefinitions: LayerDefinition[] = [
   { brightness: 1, density: 1, radius: 2.5, speed: 4 },
   { brightness: 0.5, density: 2, radius: 2, speed: 2 },
   { brightness: 0.25, density: 3, radius: 1.5, speed: 1 },
-].map((definition, index) => ({ ...definition, index }));
+].map((definition, index) => ({
+  ...definition,
+  density: definition.density * scatterCoefficient,
+  index,
+}));
 
-const colors = 10;
-
-const tileSize = 100;
+const maxRadius = Math.max(...layerDefinitions.map((d) => d.radius));
 
 type Star = {
   animationDelay: number;
@@ -165,48 +190,38 @@ type Star = {
   y: number;
 };
 
-function createTile(
+function createStar(
   layerDefinition: LayerDefinition,
   graphics: SVGGElement,
-  tileX: number,
-  tileY: number,
-): Tile {
+  x: number,
+  y: number,
+): Star {
+  const animationDelay = Math.random() * 2;
+  const color = Math.floor(Math.random() * colors);
+
+  const circle = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "circle",
+  );
+  circle.classList.add("animate-pulse");
+  circle.setAttribute("cx", x.toString());
+  circle.setAttribute("cy", y.toString());
+  circle.setAttribute(
+    "fill",
+    `url(#layer-${layerDefinition.index}-color-${color})`,
+  );
+  circle.setAttribute("r", layerDefinition.radius.toString());
+  circle.style.animationDelay = `${animationDelay}s`;
+
+  graphics.append(circle);
+
   return {
-    stars: Array.from({
-      length: layerDefinition.density,
-    }).map(() => createStar()),
+    animationDelay,
+    circle,
+    color,
+    x,
+    y,
   };
-
-  function createStar(): Star {
-    const animationDelay = Math.random() * 2;
-    const color = Math.floor(Math.random() * colors);
-    const x = (tileX + Math.random()) * tileSize;
-    const y = (tileY + Math.random()) * tileSize;
-
-    const circle = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "circle",
-    );
-    circle.classList.add("animate-pulse");
-    circle.setAttribute("cx", x.toString());
-    circle.setAttribute("cy", y.toString());
-    circle.setAttribute(
-      "fill",
-      `url(#layer-${layerDefinition.index}-color-${color})`,
-    );
-    circle.setAttribute("r", layerDefinition.radius.toString());
-    circle.style.animationDelay = `${animationDelay}s`;
-
-    graphics.append(circle);
-
-    return {
-      animationDelay,
-      circle,
-      color,
-      x,
-      y,
-    };
-  }
 }
 
 function hslToHex(hue: number, saturation: number, lightness: number) {
