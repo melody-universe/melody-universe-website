@@ -130,7 +130,7 @@ export function Parallax(): ReactNode {
   }, []);
 
   return (
-    <div className="absolute top-0 left-0">
+    <div className="absolute top-0 left-0 -z-10">
       <div className="h-screen w-screen overflow-hidden">
         <svg
           className="h-full min-h-screen w-full min-w-screen"

@@ -4,6 +4,7 @@ pre-commit:
       run: pnpm lint --fix {staged_files}
       stage_fixed: true
       exclude:
+        - "**/*.css"
         - pnpm-lock.yaml
 
     - name: typecheck
