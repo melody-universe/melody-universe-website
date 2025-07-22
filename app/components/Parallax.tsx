@@ -106,6 +106,7 @@ export function Parallax(): ReactNode {
               star.y -= offset;
 
               if (star.y + layer.definition.radius < 0) {
+                star.circle.remove();
                 layer.stars.splice(i, 1);
                 i--;
                 continue;
@@ -173,9 +174,9 @@ const speedVariance = 0.8;
 const tileSize = densityTileSize * Math.sqrt(scatterCoefficient);
 
 const layerDefinitions: LayerDefinition[] = [
-  { brightness: 1, density: 1, radius: 2.5, speed: 4 },
-  { brightness: 0.5, density: 2, radius: 2, speed: 2 },
-  { brightness: 0.25, density: 3, radius: 1.5, speed: 1 },
+  { brightness: 1, density: 2, radius: 2.5, speed: 20 },
+  { brightness: 0.5, density: 3, radius: 2, speed: 15 },
+  { brightness: 0.25, density: 4, radius: 1.5, speed: 10 },
 ].map((definition, index) => ({
   ...definition,
   density: definition.density * scatterCoefficient,
